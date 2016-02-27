@@ -6,81 +6,68 @@
 #include "derived.h"
 
 
-static struct Derived_VT vt = {
-    &Derived_data_destroy,
-    &Derived_data_setX,
-    &Derived_data_getX,
-    &Derived_data_setY,
-    &Derived_data_getY
-};
-
-
 typedef struct Derived_TAG {
     struct Derived_data data;
 } Derived;
 
 
-void Derived_data_construct(struct Derived_data *data, int x, int y)
+Derived * Derived_construct(Derived *self, int x, int y)
 {
-    assert(data != NULL);
-    Base_data_construct(&data->base, x);
-    Object_VT_update(data, &vt);
-    data->y = y;
+    assert(self != NULL);
+    Base_construct((Base *)self, x);
+    Object_VT_update(self, &Derived_VT);
+    self->data.y = y;
+    return self;
 }
 
 
-void Derived_data_destroy(void *data)
+static void Derived_destroy(void *this)
 {
-    Object_VT_update(data, &vt);
     printf("Derived::destroy()\n");
-    Base_data_destroy(data);
 }
 
 
-void Derived_data_setX(void *data, int x)
+static void Derived_copy(void *this, void *other)
+{
+    printf("Derived::copy()\n");
+}
+
+
+static void Derived_setX(Derived *this, int x)
 {
     printf("Derived::setX()\n");
-    Base_data_setX(data, x);
+    Base_VT.setX(this, x);
 }
 
 
-int Derived_data_getX(void *data)
+static int Derived_getX(Derived *this)
 {
     printf("Derived::getX()\n");
-    return Base_data_getX(data);
+    return Base_VT.getX(this);
 }
 
 
-void Derived_data_setY(void *data, int y)
+static void Derived_setY(Derived *this, int y)
 {
     printf("Derived::setY()\n");
-    ((struct Derived_data *)data)->y = y;
+    this->data.y = y;
 }
 
 
-int Derived_data_getY(void *data)
+static int Derived_getY(Derived *this)
 {
     printf("Derived::getY()\n");
-    return ((struct Derived_data *)data)->y;
+    return this->data.y;
 }
 
 
-Derived * Derived_construct(int x, int y)
-{
-    Derived * obj = (Derived *)Object_allocate(sizeof(Derived));
-    assert(obj != NULL);
-    Derived_data_construct(&obj->data, x, y);
-    return obj;
-}
-
-
-void Derived_setY(void *this, int y)
-{
-    (*(struct Derived_VT **)this)->setY(this, y);
-}
-
-
-int Derived_getY(void *this)
-{
-    return (*(struct Derived_VT **)this)->getY(this);
-}
+struct Derived_VT_TAG Derived_VT = {
+    (struct Object_VT_TAG *)&Base_VT,
+    sizeof(Derived),
+    &Derived_destroy,
+    &Derived_copy,
+    &Derived_setX,
+    &Derived_getX,
+    &Derived_setY,
+    &Derived_getY
+};

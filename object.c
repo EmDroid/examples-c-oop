@@ -2,43 +2,92 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <memory.h>
 
 #include "object.h"
 
-
-static struct Object_VT vt = {
-    &Object_data_destroy
-};
 
 typedef struct Object_TAG {
     struct Object_data data;
 } Object;
 
 
-void Object_VT_update(void *data, void *vt)
+static void Object_destroy(void *this)
 {
-    assert(data != NULL);
-    assert(vt != NULL);
-    ((struct Object_data *)data)->vt = vt;
-}
-
-
-void Object_data_destroy(void *data)
-{
-    Object_VT_update(data, &vt);
     printf("Object::destroy()\n");
 }
 
 
-Object * Object_allocate(size_t size)
+static void Object_copy(void *this, void *other)
 {
-    Object * obj = (Object *)malloc(size);
+    printf("Object::copy()\n");
+}
+
+
+struct Object_VT_TAG Object_VT = {
+    NULL,
+    sizeof(Object),
+    &Object_destroy,
+    &Object_copy
+};
+
+
+void Object_VT_update(void *this, void *vt)
+{
+    assert(this != NULL);
+    assert(vt != NULL);
+    ((Object *)this)->data.vt = vt;
+}
+
+
+Object * Object_allocate(void *size_data)
+{
+    size_t size;
+    Object * obj;
+    assert(size_data != NULL);
+    size = ((struct Object_VT_TAG *)size_data)->size;
+    obj = (Object *)malloc(size);
     if (!obj) {
         fprintf(stderr, "Exception: Out of memory\n");
         abort();
     }
-    Object_VT_update(obj, &vt);
+    memset(obj, 0, size);
+    // the initial Object virtual table
+    Object_VT_update(obj, &Object_VT);
     return obj;
+}
+
+
+static void copy_construct(void *dst, void *src, struct Object_VT_TAG *vt)
+{
+    if (vt)
+    {
+        // call superclass copy first
+        copy_construct(dst, src, vt->svt);
+        // now set the virtual table to the current level
+        *(struct Object_VT_TAG **)dst = vt;
+        // call the copy on the current level
+        vt->copy(dst, src);
+    }
+}
+
+
+Object * Object_clone(void *src)
+{
+    Object *dst;
+    struct Object_VT_TAG *vt;
+
+    if (!src) return NULL;
+
+    vt = *(struct Object_VT_TAG **)src;
+    dst = Object_allocate(vt);
+
+    // by default, binary (shallow) copy is done
+    // inherited class can supply copy() to provide different semantics
+    memcpy(dst, src, vt->size);
+    copy_construct(dst, src, vt);
+
+    return dst;
 }
 
 
@@ -46,14 +95,18 @@ void delete(void *obj)
 {
     if (obj)
     {
-        struct Object_VT *vt = ((Object *)obj)->data.vt;
-        assert(vt != NULL);
-        if (!vt->destructor)
+        struct Object_VT_TAG *vt = *(struct Object_VT_TAG **)obj;
+        while (vt)
         {
-            fprintf(stderr, "Pure virtual function call!\n");
-            abort();
+            if (!vt->destroy)
+            {
+                fprintf(stderr, "Pure virtual function call!\n");
+                abort();
+            }
+            vt->destroy(obj);
+            // move VT to superclass (will continue calling parent destructor)
+            *(struct Object_VT_TAG **)obj = vt = vt->svt;
         }
-        vt->destructor(obj);
     }
     free(obj);
 }

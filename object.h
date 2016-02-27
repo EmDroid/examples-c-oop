@@ -3,9 +3,25 @@
 #define OBJECT_H
 
 
-struct Object_VT {
-    void (*destructor)(void *obj);
+typedef struct Object_TAG Object;
+
+
+#define CALL_METHOD_0(type, method, obj)  \
+    (*(struct type ## _VT_TAG **)obj)->method(obj)
+
+#define CALL_METHOD_1(type, method, obj, par1)  \
+    (*(struct type ## _VT_TAG **)obj)->method(obj, par1)
+
+
+struct Object_VT_TAG {
+    struct Object_VT_TAG *svt;
+    size_t size;
+    void (*destroy)(void *);
+    void (*copy)(void *, void *);
 };
+
+extern struct Object_VT_TAG Object_VT;
+
 
 void Object_VT_update(void *data, void *vt);
 
@@ -14,15 +30,21 @@ struct Object_data {
     void *vt;
 };
 
-void Object_data_destroy(void * this);
+
+#define OBJECT_ALLOCATE(type) ((type *)Object_allocate(&type ## _VT))
+
+#define NEW_DEFAULT(type) type ## _construct(OBJECT_ALLOCATE(type))
+
+#define NEW_1(type, p1) type ## _construct(OBJECT_ALLOCATE(type), p1)
+#define NEW_2(type, p1, p2) type ## _construct(OBJECT_ALLOCATE(type), p1, p2)
+#define NEW_3(type, p1, p2, p3) type ## _construct(OBJECT_ALLOCATE(type), p1, p2, p3)
+//etc.
+
+#define NEW_CLONE(type, obj) (type *)Object_clone(obj)
 
 
-typedef struct Object_TAG Object;
-
-Object * Object_allocate(size_t size);
-
-
-#define new(type) type ## _construct
+Object * Object_allocate(void *size_data);
+Object * Object_clone(void *obj);
 
 void delete(void *obj);
 

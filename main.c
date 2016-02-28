@@ -7,6 +7,15 @@
 #include "derived.h"
 
 
+static int getYorX(Base *obj)
+{
+    if (IS_INSTANCE_OF(obj, Derived))
+        return CALL_METHOD_0(Derived, getY, obj);
+    else
+        return CALL_METHOD_0(Base, getX, obj);
+}
+
+
 static struct {
     char c;
 } invalid1;
@@ -63,6 +72,7 @@ int main(void)
     test(IS_INSTANCE_OF(b, Derived), 1, "%d");
     test(DYNAMIC_CAST(b, Base), b, "%p");
     test(DYNAMIC_CAST(b, Derived), (Derived *)b, "%p");
+    test(getYorX(b), 11, "%d");
 
     b1 = NEW_CLONE(Base, b);
 
@@ -76,6 +86,7 @@ int main(void)
     test(IS_INSTANCE_OF(b1, Derived), 1, "%d");
     test(DYNAMIC_CAST(b1, Base), b1, "%p");
     test(DYNAMIC_CAST(b1, Derived), (Derived *)b1, "%p");
+    test(getYorX(b1), 11, "%d");
 
     delete(b1);
     b1 = NULL;

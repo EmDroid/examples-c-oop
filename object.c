@@ -52,6 +52,8 @@ Object * Object_allocate(void *size_data)
         abort();
     }
     memset(obj, 0, size);
+    // put the guard
+    obj->data.guard = &Object_VT;
     // the initial Object virtual table
     Object_VT_update(obj, &Object_VT);
     return obj;
@@ -65,7 +67,7 @@ static void copy_construct(void *dst, void *src, struct Object_VT_TAG *vt)
         // call superclass copy first
         copy_construct(dst, src, vt->svt);
         // now set the virtual table to the current level
-        *(struct Object_VT_TAG **)dst = vt;
+        ((Object *)dst)->data.vt = vt;
         // call the copy on the current level
         vt->copy(dst, src);
     }
@@ -79,7 +81,10 @@ Object * Object_clone(void *src)
 
     if (!src) return NULL;
 
-    vt = *(struct Object_VT_TAG **)src;
+    // or runtime check and abort()
+    assert(IS_INSTANCE_OF(src, Object));
+
+    vt = ((struct Object_data *)src)->vt;
     dst = Object_allocate(vt);
 
     // by default, binary (shallow) copy is done
@@ -93,20 +98,55 @@ Object * Object_clone(void *src)
 
 void delete(void *obj)
 {
-    if (obj)
+    struct Object_VT_TAG *vt;
+
+    if (!obj) return;
+
+    // or runtime check and abort()
+    assert(IS_INSTANCE_OF(obj, Object));
+
+    vt = ((struct Object_data *)obj)->vt;
+    while (vt)
     {
-        struct Object_VT_TAG *vt = *(struct Object_VT_TAG **)obj;
-        while (vt)
+        if (!vt->destroy)
         {
-            if (!vt->destroy)
-            {
-                fprintf(stderr, "Pure virtual function call!\n");
-                abort();
-            }
-            vt->destroy(obj);
-            // move VT to superclass (will continue calling parent destructor)
-            *(struct Object_VT_TAG **)obj = vt = vt->svt;
+            fprintf(stderr, "Pure virtual function call!\n");
+            abort();
         }
+        vt->destroy(obj);
+        // move VT to superclass (will continue calling parent destructor)
+        ((struct Object_data *)obj)->vt = vt = vt->svt;
     }
     free(obj);
+}
+
+
+int Object_isInstanceOf(void *obj, void *type_vt)
+{
+    struct Object_VT_TAG *obj_vt;
+    assert(type_vt != NULL);
+    if (!obj) return 0;
+
+    // check if the guard matches and there is a nonzero VT table pointer
+    if (*(void **)obj != &Object_VT || (*(void ***)obj + 1) == NULL) return 0;
+
+    // note the above still can fail in some cases - to solve this properly,
+    // building of registry of all know VTs woould need to be done and the
+    // object checked against that registry
+    // (the registry can be build/updated by Object_allocate() which is to
+    // be called for each valid object)
+
+    obj_vt = ((struct Object_data *)obj)->vt;
+    while (obj_vt)
+    {
+        if (obj_vt == type_vt) return 1;
+        obj_vt = obj_vt->svt;
+    }
+    return 0;
+}
+
+
+void * Object_dynamicCast(void *obj, void *type_vt)
+{
+    return Object_isInstanceOf(obj, type_vt) ? obj : NULL;
 }

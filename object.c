@@ -8,7 +8,7 @@
 
 
 typedef struct Object_TAG {
-    struct Object_data data;
+    struct Object_DATA_TAG data;
 } Object;
 
 
@@ -84,7 +84,7 @@ Object * Object_clone(void *src)
     // or runtime check and abort()
     assert(IS_INSTANCE_OF(src, Object));
 
-    vt = ((struct Object_data *)src)->vt;
+    vt = ((struct Object_DATA_TAG *)src)->vt;
     dst = Object_allocate(vt);
 
     // by default, binary (shallow) copy is done
@@ -105,7 +105,7 @@ void delete(void *obj)
     // or runtime check and abort()
     assert(IS_INSTANCE_OF(obj, Object));
 
-    vt = ((struct Object_data *)obj)->vt;
+    vt = ((struct Object_DATA_TAG *)obj)->vt;
     while (vt)
     {
         if (!vt->destroy)
@@ -115,7 +115,7 @@ void delete(void *obj)
         }
         vt->destroy(obj);
         // move VT to superclass (will continue calling parent destructor)
-        ((struct Object_data *)obj)->vt = vt = vt->svt;
+        ((struct Object_DATA_TAG *)obj)->vt = vt = vt->svt;
     }
     free(obj);
 }
@@ -136,7 +136,7 @@ int Object_isInstanceOf(void *obj, void *type_vt)
     // (the registry can be build/updated by Object_allocate() which is to
     // be called for each valid object)
 
-    obj_vt = ((struct Object_data *)obj)->vt;
+    obj_vt = ((struct Object_DATA_TAG *)obj)->vt;
     while (obj_vt)
     {
         if (obj_vt == type_vt) return 1;

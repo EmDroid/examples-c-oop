@@ -6,12 +6,10 @@
 #include "base.h"
 
 
-typedef struct Base_TAG {
-    struct Base_data data;
-} Base;
+IMPLEMENT_CLASS(Base)
 
 
-Base * Base_construct(Base *self, int x)
+DEFINE_CLASS_CONSTRUCTOR(Base)(Base *self, int x)
 {
     assert(self != NULL);
     Object_VT_update(self, &Base_VT);
@@ -20,16 +18,8 @@ Base * Base_construct(Base *self, int x)
 }
 
 
-static void Base_destroy(void *this)
-{
-    printf("Base::destroy()\n");
-}
-
-
-static void Base_copy(void *this, void *other)
-{
-    printf("Base::copy()\n");
-}
+IMPLEMENT_DEFAULT_DESTRUCTOR(Base)
+IMPLEMENT_DEFAULT_COPY(Base)
 
 
 static void Base_setX(Base *this, int x)
@@ -46,11 +36,7 @@ static int Base_getX(Base *this)
 }
 
 
-struct Base_VT_TAG Base_VT = {
-    (struct Object_VT_TAG *)&Object_VT,
-    sizeof(Base),
-    &Base_destroy,
-    &Base_copy,
+IMPLEMENT_CLASS_VTABLE_BEGIN(Base, Object)
     &Base_setX,
     &Base_getX
-};
+IMPLEMENT_CLASS_VTABLE_END(Base)

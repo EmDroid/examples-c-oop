@@ -17,33 +17,24 @@ static int getYorX(Base *obj)
 }
 
 
-typedef struct Derived2_TAG Derived2;
+DECLARE_CLASS_BEGIN(Derived2, Derived)
+    // the attributes
+    int z;
+DECLARE_CLASS_END(Derived2)
 
+DECLARE_CLASS_CONSTRUCTOR(Derived2)(Derived2 *self, int x, int y, int z);
 
-Derived2 * Derived2_construct(Derived2 *self, int x, int y, int z);
-
-
-struct Derived2_VT_TAG {
-    struct Derived_VT_TAG base;
+DECLARE_CLASS_VTABLE_BEGIN(Derived2, Derived)
+    // the methods
     void (*setZ)(void *, int);
     int (*getZ)(void *);
-};
-
-extern struct Derived2_VT_TAG Derived2_VT;
+DECLARE_CLASS_VTABLE_END(Derived2)
 
 
-struct Derived2_data {
-    struct Derived_data base;
-    int z;
-};
+IMPLEMENT_CLASS(Derived2)
 
 
-typedef struct Derived2_TAG {
-    struct Derived2_data data;
-} Derived2;
-
-
-Derived2 * Derived2_construct(Derived2 *self, int x, int y, int z)
+DEFINE_CLASS_CONSTRUCTOR(Derived2)(Derived2 *self, int x, int y, int z)
 {
     assert(self != NULL);
     // call parent constructor
@@ -56,16 +47,8 @@ Derived2 * Derived2_construct(Derived2 *self, int x, int y, int z)
 }
 
 
-static void Derived2_destroy(void *this)
-{
-    printf("Derived2::destroy()\n");
-}
-
-
-static void Derived2_copy(void *this, void *other)
-{
-    printf("Derived2::copy()\n");
-}
+IMPLEMENT_DEFAULT_DESTRUCTOR(Derived2)
+IMPLEMENT_DEFAULT_COPY(Derived2)
 
 
 static void Derived2_setX(Derived2 *this, int x)
@@ -110,18 +93,14 @@ static int Derived2_getZ(Derived2 *this)
 }
 
 
-struct Derived2_VT_TAG Derived2_VT = {
-    (struct Object_VT_TAG *)&Derived_VT,
-    sizeof(Derived2),
-    &Derived2_destroy,
-    &Derived2_copy,
+IMPLEMENT_CLASS_VTABLE_BEGIN(Derived2, Derived)
     &Derived2_setX,
     &Derived2_getX,
     &Derived2_setY,
     &Derived2_getY,
     &Derived2_setZ,
     &Derived2_getZ
-};
+IMPLEMENT_CLASS_VTABLE_END(Derived2)
 
 
 static struct {

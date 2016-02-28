@@ -5,25 +5,18 @@
 #include "object.h"
 
 
-typedef struct Base_TAG Base;
+DECLARE_CLASS_BEGIN(Base, Object)
+    // the attributes
+    int x;
+DECLARE_CLASS_END(Base)
 
+DECLARE_CLASS_CONSTRUCTOR(Base)(Base *self, int x);
 
-Base * Base_construct(Base *self, int x);
-
-
-struct Base_VT_TAG {
-    struct Object_VT_TAG base;
+DECLARE_CLASS_VTABLE_BEGIN(Base, Object)
+    // the methods
     void (*setX)(void *, int);
     int (*getX)(void *);
-};
-
-extern struct Base_VT_TAG Base_VT;
-
-
-struct Base_data {
-    struct Object_data base;
-    int x;
-};
+DECLARE_CLASS_VTABLE_END(Base)
 
 
 #endif

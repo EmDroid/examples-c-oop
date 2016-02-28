@@ -6,12 +6,10 @@
 #include "derived.h"
 
 
-typedef struct Derived_TAG {
-    struct Derived_data data;
-} Derived;
+IMPLEMENT_CLASS(Derived)
 
 
-Derived * Derived_construct(Derived *self, int x, int y)
+DEFINE_CLASS_CONSTRUCTOR(Derived)(Derived *self, int x, int y)
 {
     assert(self != NULL);
     Base_construct((Base *)self, x);
@@ -21,16 +19,8 @@ Derived * Derived_construct(Derived *self, int x, int y)
 }
 
 
-static void Derived_destroy(void *this)
-{
-    printf("Derived::destroy()\n");
-}
-
-
-static void Derived_copy(void *this, void *other)
-{
-    printf("Derived::copy()\n");
-}
+IMPLEMENT_DEFAULT_DESTRUCTOR(Derived)
+IMPLEMENT_DEFAULT_COPY(Derived)
 
 
 static void Derived_setX(Derived *this, int x)
@@ -61,13 +51,9 @@ static int Derived_getY(Derived *this)
 }
 
 
-struct Derived_VT_TAG Derived_VT = {
-    (struct Object_VT_TAG *)&Base_VT,
-    sizeof(Derived),
-    &Derived_destroy,
-    &Derived_copy,
+IMPLEMENT_CLASS_VTABLE_BEGIN(Derived, Base)
     &Derived_setX,
     &Derived_getX,
     &Derived_setY,
     &Derived_getY
-};
+IMPLEMENT_CLASS_VTABLE_END(Derived)

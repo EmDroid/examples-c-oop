@@ -5,25 +5,18 @@
 #include "base.h"
 
 
-typedef struct Derived_TAG Derived;
+DECLARE_CLASS_BEGIN(Derived, Base)
+    // the attributes
+    int y;
+DECLARE_CLASS_END(Base)
 
+DECLARE_CLASS_CONSTRUCTOR(Derived)(Derived *self, int x, int y);
 
-Derived * Derived_construct(Derived *self, int x, int y);
-
-
-struct Derived_VT_TAG {
-    struct Base_VT_TAG base;
+DECLARE_CLASS_VTABLE_BEGIN(Derived, Base)
+    // the methods
     void (*setY)(void *, int);
     int (*getY)(void *);
-};
-
-extern struct Derived_VT_TAG Derived_VT;
-
-
-struct Derived_data {
-    struct Base_data base;
-    int y;
-};
+DECLARE_CLASS_VTABLE_END(Derived)
 
 
 #endif

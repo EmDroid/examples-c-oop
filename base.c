@@ -22,17 +22,17 @@ IMPLEMENT_DEFAULT_DESTRUCTOR(Base)
 IMPLEMENT_DEFAULT_COPY(Base)
 
 
-static void Base_setX(Base *this, int x)
+static void Base_setX(void *this, int x)
 {
     printf("Base::setX()\n");
-    this->data.x = x;
+    ((Base *)this)->data.x = x;
 }
 
 
-static int Base_getX(Base *this)
+static int Base_getX(void *this)
 {
     printf("Base::getX()\n");
-    return this->data.x;
+    return ((Base *)this)->data.x;
 }
 
 

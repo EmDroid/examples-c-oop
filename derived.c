@@ -23,31 +23,31 @@ IMPLEMENT_DEFAULT_DESTRUCTOR(Derived)
 IMPLEMENT_DEFAULT_COPY(Derived)
 
 
-static void Derived_setX(Derived *this, int x)
+static void Derived_setX(void *this, int x)
 {
     printf("Derived::setX()\n");
     Base_VT.setX(this, x);
 }
 
 
-static int Derived_getX(Derived *this)
+static int Derived_getX(void *this)
 {
     printf("Derived::getX()\n");
     return Base_VT.getX(this);
 }
 
 
-static void Derived_setY(Derived *this, int y)
+static void Derived_setY(void *this, int y)
 {
     printf("Derived::setY()\n");
-    this->data.y = y;
+    ((Derived *)this)->data.y = y;
 }
 
 
-static int Derived_getY(Derived *this)
+static int Derived_getY(void *this)
 {
     printf("Derived::getY()\n");
-    return this->data.y;
+    return ((Derived *)this)->data.y;
 }
 
 

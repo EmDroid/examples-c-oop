@@ -51,45 +51,45 @@ IMPLEMENT_DEFAULT_DESTRUCTOR(Derived2)
 IMPLEMENT_DEFAULT_COPY(Derived2)
 
 
-static void Derived2_setX(Derived2 *this, int x)
+static void Derived2_setX(void *this, int x)
 {
     printf("Derived2::setX()\n");
     Base_VT.setX(this, x);
 }
 
 
-static int Derived2_getX(Derived2 *this)
+static int Derived2_getX(void *this)
 {
     printf("Derived2::getX()\n");
     return Base_VT.getX(this);
 }
 
 
-static void Derived2_setY(Derived2 *this, int y)
+static void Derived2_setY(void *this, int y)
 {
     printf("Derived2::setY()\n");
     Derived_VT.setY(this, y);
 }
 
 
-static int Derived2_getY(Derived2 *this)
+static int Derived2_getY(void *this)
 {
     printf("Derived2::getY()\n");
     return Derived_VT.getY(this);
 }
 
 
-static void Derived2_setZ(Derived2 *this, int z)
+static void Derived2_setZ(void *this, int z)
 {
     printf("Derived2::setZ()\n");
-    this->data.z = z;
+    ((Derived2 *)this)->data.z = z;
 }
 
 
-static int Derived2_getZ(Derived2 *this)
+static int Derived2_getZ(void *this)
 {
     printf("Derived2::getZ()\n");
-    return this->data.z;
+    return ((Derived2 *)this)->data.z;
 }
 
 
@@ -135,8 +135,8 @@ int main(void)
     test(IS_INSTANCE_OF(b, Derived), 0, "%d");
     test(IS_INSTANCE_OF(b, Derived2), 0, "%d");
     test(DYNAMIC_CAST(b, Base), b, "%p");
-    test(DYNAMIC_CAST(b, Derived), 0, "%p");
-    test(DYNAMIC_CAST(b, Derived2), 0, "%p");
+    test(DYNAMIC_CAST(b, Derived), NULL, "%p");
+    test(DYNAMIC_CAST(b, Derived2), NULL, "%p");
     delete(b);
     b = NULL;
 
@@ -152,7 +152,7 @@ int main(void)
     test(IS_INSTANCE_OF(d, Derived2), 0, "%d");
     test(DYNAMIC_CAST(d, Base), (Base *)d, "%p");
     test(DYNAMIC_CAST(d, Derived), d, "%p");
-    test(DYNAMIC_CAST(d, Derived2), 0, "%p");
+    test(DYNAMIC_CAST(d, Derived2), NULL, "%p");
     delete(d);
     d = NULL;
 
@@ -222,6 +222,8 @@ int main(void)
     test(IS_INSTANCE_OF(NULL, Derived), 0, "%d");
     test(DYNAMIC_CAST(NULL, Base), NULL, "%p");
     test(DYNAMIC_CAST(NULL, Derived), NULL, "%p");
+
+    delete(b1);
 
     test(IS_INSTANCE_OF(&invalid1, Base), 0, "%d");
     test(IS_INSTANCE_OF(&invalid1, Derived), 0, "%d");

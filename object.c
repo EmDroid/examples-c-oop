@@ -12,6 +12,17 @@ typedef struct Object_TAG {
 } Object;
 
 
+DEFINE_CLASS_CONSTRUCTOR(Object)(Object *self)
+{
+    assert(self != NULL);
+    // put the guard
+    ((Object_DATA *)&self->data)->guard = &Object_VT;
+    // the initial Object virtual table
+    Object_VT_update(self, &Object_VT);
+    return self;
+}
+
+
 static void Object_destroy(void *this)
 {
     printf("Object::destroy()\n");
@@ -52,10 +63,7 @@ Object * Object_allocate(void *size_data)
         abort();
     }
     memset(obj, 0, size);
-    // put the guard
-    obj->data.guard = &Object_VT;
-    // the initial Object virtual table
-    Object_VT_update(obj, &Object_VT);
+    Object_construct(obj);
     return obj;
 }
 
@@ -96,11 +104,9 @@ Object * Object_clone(void *src)
 }
 
 
-void delete(void *obj)
+void destroy(void *obj)
 {
     struct Object_VT_TAG *vt;
-
-    if (!obj) return;
 
     // or runtime check and abort()
     assert(IS_INSTANCE_OF(obj, Object));
@@ -117,6 +123,13 @@ void delete(void *obj)
         // move VT to superclass (will continue calling parent destructor)
         ((struct Object_DATA_TAG *)obj)->vt = vt = vt->svt;
     }
+}
+
+
+void delete(void *obj)
+{
+    if (obj) destroy(obj);
+
     free(obj);
 }
 

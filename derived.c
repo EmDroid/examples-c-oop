@@ -14,7 +14,7 @@ DEFINE_CLASS_CONSTRUCTOR(Derived)(Derived *self, int x, int y)
     assert(self != NULL);
     Base_construct((Base *)self, x);
     Object_VT_update(self, &Derived_VT);
-    self->data.y = y;
+    ((Derived_DATA *)&self->data)->y = y;
     return self;
 }
 
@@ -40,14 +40,14 @@ static int Derived_getX(void *this)
 static void Derived_setY(void *this, int y)
 {
     printf("Derived::setY()\n");
-    ((Derived *)this)->data.y = y;
+    ((Derived_DATA *)&((Derived *)this)->data)->y = y;
 }
 
 
 static int Derived_getY(void *this)
 {
     printf("Derived::getY()\n");
-    return ((Derived *)this)->data.y;
+    return ((Derived_DATA *)&((Derived *)this)->data)->y;
 }
 
 

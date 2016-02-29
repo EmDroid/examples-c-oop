@@ -42,7 +42,7 @@ DEFINE_CLASS_CONSTRUCTOR(Derived2)(Derived2 *self, int x, int y, int z)
     // bring the VT to current type
     Object_VT_update(self, &Derived2_VT);
     // set the members
-    self->data.z = z;
+    ((Derived2_DATA *)&self->data)->z = z;
     return self;
 }
 
@@ -82,14 +82,14 @@ static int Derived2_getY(void *this)
 static void Derived2_setZ(void *this, int z)
 {
     printf("Derived2::setZ()\n");
-    ((Derived2 *)this)->data.z = z;
+    ((Derived2_DATA *)&((Derived2 *)this)->data)->z = z;
 }
 
 
 static int Derived2_getZ(void *this)
 {
     printf("Derived2::getZ()\n");
-    return ((Derived2 *)this)->data.z;
+    return ((Derived2_DATA *)&((Derived2 *)this)->data)->z;
 }
 
 
@@ -119,6 +119,13 @@ static struct {
         return EXIT_FAILURE;                                \
     }
 
+
+Derived getDerivedByValue(int x, int y)
+{
+    Derived result;
+    CONSTRUCT_2(Derived, result, x, y);
+    return result;
+}
 
 
 int main(void)
@@ -231,6 +238,24 @@ int main(void)
     test(DYNAMIC_CAST(&invalid1, Derived), NULL, "%p");
 
 //    delete(&invalid1);  // should assert in the deleter
+
+    // check stack allocated objects
+    {
+        Derived ds = getDerivedByValue(50, 51);
+        test(CALL_METHOD_0(Base, getX, &ds), 50, "%d");
+        test(CALL_METHOD_0(Derived, getY, &ds), 51, "%d");
+        CALL_METHOD_1(Base, setX, &ds, 5);
+        CALL_METHOD_1(Derived, setY, &ds, 6);
+        test(CALL_METHOD_0(Base, getX, &ds), 5, "%d");
+        test(CALL_METHOD_0(Derived, getY, &ds), 6, "%d");
+        test(IS_INSTANCE_OF(&ds, Base), 1, "%d");
+        test(IS_INSTANCE_OF(&ds, Derived), 1, "%d");
+        test(IS_INSTANCE_OF(&ds, Derived2), 0, "%d");
+        test(DYNAMIC_CAST(&ds, Base), (Base *)&ds, "%p");
+        test(DYNAMIC_CAST(&ds, Derived), &ds, "%p");
+        test(DYNAMIC_CAST(&ds, Derived2), NULL, "%p");
+        destroy(&ds);
+    }
 
     return 0;
 }

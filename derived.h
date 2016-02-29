@@ -8,7 +8,7 @@
 DECLARE_CLASS_BEGIN(Derived, Base)
     // the attributes
     int y;
-DECLARE_CLASS_END(Base)
+DECLARE_CLASS_END(Derived)
 
 DECLARE_CLASS_CONSTRUCTOR(Derived)(Derived *self, int x, int y);
 

@@ -3,20 +3,19 @@
 #define OBJECT_H
 
 
-#define DECLARE_CLASS_BEGIN(name, base) \
-    typedef struct name ## _TAG name;   \
-    struct name ## _DATA_TAG {          \
+#define DECLARE_CLASS_BEGIN(name, base)         \
+    typedef struct name ## _DATA_TAG {          \
         struct base ## _DATA_TAG super;
 
 
-#define DECLARE_CLASS_END(name)         \
-    };
-
-
-#define IMPLEMENT_CLASS(name)           \
-    typedef struct name ## _TAG {       \
-        struct name ## _DATA_TAG data;  \
+#define DECLARE_CLASS_END(name)                 \
+    } name ## _DATA;                            \
+    typedef struct name ## _TAG {               \
+        char data[sizeof(struct name ## _DATA_TAG)]; \
     } name;
+
+
+#define IMPLEMENT_CLASS(name)
 
 
 #define DECLARE_CLASS_CONSTRUCTOR(name) \
@@ -85,19 +84,30 @@ extern struct Object_VT_TAG Object_VT;
 void Object_VT_update(void *data, void *vt);
 
 
-struct Object_DATA_TAG {
+typedef struct Object_DATA_TAG {
     void *guard;
     void *vt;
-};
+} Object_DATA;
+
+DECLARE_CLASS_CONSTRUCTOR(Object)(Object *self);
 
 
 #define OBJECT_ALLOCATE(type) ((type *)Object_allocate(&type ## _VT))
 
-#define NEW_DEFAULT(type) type ## _construct(OBJECT_ALLOCATE(type))
+#define CONSTRUCT_DEFAULT(type, var) type ## _construct(&var)
 
-#define NEW_1(type, p1) type ## _construct(OBJECT_ALLOCATE(type), p1)
-#define NEW_2(type, p1, p2) type ## _construct(OBJECT_ALLOCATE(type), p1, p2)
-#define NEW_3(type, p1, p2, p3) type ## _construct(OBJECT_ALLOCATE(type), p1, p2, p3)
+#define CONSTRUCT_1(type, var, p1) type ## _construct(&var, p1)
+#define CONSTRUCT_2(type, var, p1, p2) type ## _construct(&var, p1, p2)
+#define CONSTRUCT_3(type, var, p1, p2, p3) type ## _construct(&var, p1, p2, p3)
+//etc.
+
+
+
+#define NEW_DEFAULT(type) CONSTRUCT_DEFAULT(type, *OBJECT_ALLOCATE(type))
+
+#define NEW_1(type, p1) CONSTRUCT_1(type, *OBJECT_ALLOCATE(type), p1)
+#define NEW_2(type, p1, p2) CONSTRUCT_2(type, *OBJECT_ALLOCATE(type), p1, p2)
+#define NEW_3(type, p1, p2, p3) CONSTRUCT_3(type, *OBJECT_ALLOCATE(type), p1, p2, p3)
 //etc.
 
 #define NEW_CLONE(type, obj) (type *)Object_clone(obj)
@@ -106,6 +116,10 @@ struct Object_DATA_TAG {
 Object * Object_allocate(void *size_data);
 Object * Object_clone(void *obj);
 
+// run destructor without memory deallocation (objects built by CONSTRUCT_...)
+void destroy(void *obj);
+
+// run destructor and deallocate memory (objects built by NEW_...)
 void delete(void *obj);
 
 

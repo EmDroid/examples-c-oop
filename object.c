@@ -82,6 +82,19 @@ static void copy_construct(void *dst, void *src, struct Object_VT_TAG *vt)
 }
 
 
+void Object_callCopyConstruct(void *dst, void *src, struct Object_VT_TAG *vt)
+{
+    assert(src != NULL);
+    assert(dst != NULL);
+    assert(vt != NULL);
+
+    // by default, binary (shallow) copy is done
+    // inherited class can supply copy() to provide different semantics
+    memcpy(dst, src, vt->size);
+    copy_construct(dst, src, vt);
+}
+
+
 Object * Object_clone(void *src)
 {
     Object *dst;
@@ -95,10 +108,7 @@ Object * Object_clone(void *src)
     vt = ((struct Object_DATA_TAG *)src)->vt;
     dst = Object_allocate(vt);
 
-    // by default, binary (shallow) copy is done
-    // inherited class can supply copy() to provide different semantics
-    memcpy(dst, src, vt->size);
-    copy_construct(dst, src, vt);
+    Object_callCopyConstruct(dst, src, vt);
 
     return dst;
 }

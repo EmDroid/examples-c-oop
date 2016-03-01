@@ -124,7 +124,40 @@ Derived getDerivedByValue(int x, int y)
 {
     Derived result;
     CONSTRUCT_2(Derived, result, x, y);
-    return result;
+    return CONSTRUCT_COPY(Derived, result);
+}
+
+
+int testTakeBase(Base obj, int testX)
+{
+    test(CALL_METHOD_0(Base, getX, &obj), testX, "%d");
+    CALL_METHOD_1(Base, setX, &obj, 1000);
+    test(CALL_METHOD_0(Base, getX, &obj), 1000, "%d");
+    test(IS_INSTANCE_OF(&obj, Base), 1, "%d");
+    test(IS_INSTANCE_OF(&obj, Derived), 0, "%d");
+    test(IS_INSTANCE_OF(&obj, Derived2), 0, "%d");
+    test(DYNAMIC_CAST(&obj, Base), &obj, "%p");
+    test(DYNAMIC_CAST(&obj, Derived), NULL, "%p");
+    test(DYNAMIC_CAST(&obj, Derived2), NULL, "%p");
+    return EXIT_FAILURE;
+}
+
+
+int testTakeDerived(Derived obj, int testX, int testY)
+{
+    test(CALL_METHOD_0(Base, getX, &obj), testX, "%d");
+    test(CALL_METHOD_0(Derived, getY, &obj), testY, "%d");
+    CALL_METHOD_1(Base, setX, &obj, 1001);
+    CALL_METHOD_1(Derived, setY, &obj, 1002);
+    test(CALL_METHOD_0(Base, getX, &obj), 1001, "%d");
+    test(CALL_METHOD_0(Derived, getY, &obj), 1002, "%d");
+    test(IS_INSTANCE_OF(&obj, Base), 1, "%d");
+    test(IS_INSTANCE_OF(&obj, Derived), 1, "%d");
+    test(IS_INSTANCE_OF(&obj, Derived2), 0, "%d");
+    test(DYNAMIC_CAST(&obj, Base), (Base *)&obj, "%p");
+    test(DYNAMIC_CAST(&obj, Derived), &obj, "%p");
+    test(DYNAMIC_CAST(&obj, Derived2), NULL, "%p");
+    return EXIT_FAILURE;
 }
 
 
@@ -135,6 +168,11 @@ int main(void)
     Derived2 *d2;
 
     b = NEW_1(Base, 1);
+    if (!testTakeBase(CONSTRUCT_COPY(Base, *b), 1))
+        return EXIT_FAILURE;
+    // this (correctly) aborts in CONSTRUCT_COPY, because b is not Derived instance
+//    if (!testTakeDerived(CONSTRUCT_COPY(Derived, *b), 1, 0))
+//        return EXIT_FAILURE;
     test(CALL_METHOD_0(Base, getX, b), 1, "%d");
     CALL_METHOD_1(Base, setX, b, 2);
     test(CALL_METHOD_0(Base, getX, b), 2, "%d");
@@ -148,6 +186,10 @@ int main(void)
     b = NULL;
 
     d = NEW_2(Derived, 3, 4);
+    if (!testTakeBase(CONSTRUCT_COPY(Base, *d), 3))
+        return EXIT_FAILURE;
+    if (!testTakeDerived(CONSTRUCT_COPY(Derived, *d), 3, 4))
+        return EXIT_FAILURE;
     test(CALL_METHOD_0(Base, getX, d), 3, "%d");
     test(CALL_METHOD_0(Derived, getY, d), 4, "%d");
     CALL_METHOD_1(Base, setX, d, 5);
@@ -164,6 +206,10 @@ int main(void)
     d = NULL;
 
     d2 = NEW_3(Derived2, 13, 14, 15);
+    if (!testTakeBase(CONSTRUCT_COPY(Base, *d2), 13))
+        return EXIT_FAILURE;
+    if (!testTakeDerived(CONSTRUCT_COPY(Derived, *d2), 13, 14))
+        return EXIT_FAILURE;
     test(CALL_METHOD_0(Base, getX, d2), 13, "%d");
     test(CALL_METHOD_0(Derived, getY, d2), 14, "%d");
     test(CALL_METHOD_0(Derived2, getZ, d2), 15, "%d");
@@ -183,6 +229,11 @@ int main(void)
     d2 = NULL;
 
     b = (Base *)NEW_2(Derived, 10, 11);
+    if (!testTakeBase(CONSTRUCT_COPY(Base, *b), 10))
+        return EXIT_FAILURE;
+    // now this doesn't abort (b instance of Derived)
+    if (!testTakeDerived(CONSTRUCT_COPY(Derived, *b), 10, 11))
+        return EXIT_FAILURE;
     test(CALL_METHOD_0(Base, getX, b), 10, "%d");
     CALL_METHOD_1(Base, setX, b, 12);
     test(CALL_METHOD_0(Base, getX, b), 12, "%d");
@@ -197,6 +248,11 @@ int main(void)
     delete(b);
     b = NULL;
 
+    if (!testTakeBase(CONSTRUCT_COPY(Base, *b1), 12))
+        return EXIT_FAILURE;
+    // works (b1 instance of Derived)
+    if (!testTakeDerived(CONSTRUCT_COPY(Derived, *b1), 12, 11))
+        return EXIT_FAILURE;
     test(CALL_METHOD_0(Base, getX, b1), 12, "%d");
     CALL_METHOD_1(Base, setX, b1, 20);
     test(CALL_METHOD_0(Base, getX, b1), 20, "%d");
@@ -242,6 +298,10 @@ int main(void)
     // check stack allocated objects
     {
         Derived ds = getDerivedByValue(50, 51);
+        if (!testTakeBase(CONSTRUCT_COPY(Base, ds), 50))
+            return EXIT_FAILURE;
+        if (!testTakeDerived(CONSTRUCT_COPY(Derived, ds), 50, 51))
+            return EXIT_FAILURE;
         test(CALL_METHOD_0(Base, getX, &ds), 50, "%d");
         test(CALL_METHOD_0(Derived, getY, &ds), 51, "%d");
         CALL_METHOD_1(Base, setX, &ds, 5);

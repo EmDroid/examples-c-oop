@@ -12,10 +12,24 @@
     } name ## _DATA;                            \
     typedef struct name ## _TAG {               \
         char data[sizeof(struct name ## _DATA_TAG)]; \
-    } name;
+    } name;                                     \
+    name name ## _copyConstruct(void *obj);
 
 
-#define IMPLEMENT_CLASS(name)
+#define IMPLEMENT_CLASS(name)                   \
+    name name ## _copyConstruct(void *obj)      \
+    {                                           \
+        name result;                            \
+        /* or assert() for debug-only check */  \
+        if (!IS_INSTANCE_OF(obj, name)) {       \
+            fprintf(stderr, "Source not instance of '%s'!\n", \
+                    #name);                     \
+            abort();                            \
+        }                                       \
+        Object_callCopyConstruct(&result, obj,  \
+            (struct Object_VT_TAG *)&name ## _VT); \
+        return result;                          \
+    }
 
 
 #define DECLARE_CLASS_CONSTRUCTOR(name) \
@@ -101,6 +115,7 @@ DECLARE_CLASS_CONSTRUCTOR(Object)(Object *self);
 #define CONSTRUCT_3(type, var, p1, p2, p3) type ## _construct(&var, p1, p2, p3)
 //etc.
 
+#define CONSTRUCT_COPY(type, var) type ## _copyConstruct(&var)
 
 
 #define NEW_DEFAULT(type) CONSTRUCT_DEFAULT(type, *OBJECT_ALLOCATE(type))
@@ -112,6 +127,8 @@ DECLARE_CLASS_CONSTRUCTOR(Object)(Object *self);
 
 #define NEW_CLONE(type, obj) (type *)Object_clone(obj)
 
+
+void Object_callCopyConstruct(void *dst, void *src, struct Object_VT_TAG *vt);
 
 Object * Object_allocate(void *size_data);
 Object * Object_clone(void *obj);
